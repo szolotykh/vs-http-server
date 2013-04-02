@@ -1,0 +1,15 @@
+========== Server ==========
+
+To make a server
+	$ make
+
+To run server use
+	$ ./server port
+
+Test case
+	1. Run as $ ./server 8080
+	2. Open pages:
+		localhost:8080/index.html
+		localhost:8080/some.html
+		localhost:8080/some2.html
+	3. Also page localhost:8080/other.html is not exist
