@@ -92,7 +92,13 @@ int main(int argc, char *argv[]){
 	char *code;
 	char *body;
 	
-	fp = fopen(clientReq->object,"r");
+	// Create object path
+	char* objectPath = (char*)malloc(strlen("./wwwFiles/") + strlen(clientReq->object)+1);
+	strcpy(objectPath, "./wwwFiles/");
+	strcat(objectPath, clientReq->object);
+
+	// Open requested object
+	fp = fopen(objectPath,"r");
 	if(fp != NULL){
 		for(i = 0; i<MAX_FILE_SIZE; i++){
 			int c = getc(fp);
@@ -112,6 +118,7 @@ int main(int argc, char *argv[]){
 		msg = "Not found";
 		body = "<html><h1>Page not found</h1></html>\r\n";
 	}
+	free(objectPath);
 
 	
 	struct response* sResp = createResponse("HTTP/1.1", code, msg);
