@@ -1,4 +1,5 @@
-========== Server ==========
+========== HTTP Server ==========
+Support only HTTP 1.0
 
 To make a server
 	$ make
