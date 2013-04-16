@@ -12,7 +12,7 @@ int main(int argc, char *argv[]){
 
 	printf("===== Http Server =====\n");
 
-	int serverSocket, clientSock;
+	int serverSocket;
 	
 	char buffer[BUFFER_SIZE];
 	char cBuffer;
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
 
 	serverSocket = startHTTPServer(atoi(argv[1]));
 
-
+	int clientSock;
 	struct sockaddr_in clientAddr;
 	socklen_t clientLen = sizeof(clientAddr);
 	
@@ -57,22 +57,21 @@ int main(int argc, char *argv[]){
 			stopInd++;
 			if(stopInd == 4)
 				break;
-		}else{
+		}
+		else{
 			stopInd = 0;
 		}
 	}
 
+	// Create request header object from string
 	struct request* clientReq = requestFromBuffer(buffer, receivedLen);
 	printf("Method: %s\n", clientReq->method);
 	printf("Object: %s\n", clientReq->object);
 	printf("Protocol: %s\n", clientReq->protocol);
 	printf("Headers: %s\n", clientReq->headers);
 	
-	char *respBuf;
-	char *msg;
-	char *code;
-	char *body;
-	
+	struct response* sResp;
+
 	// Create object path
 	char* objectPath = (char*)malloc(strlen("./wwwFiles/") + strlen(clientReq->object)+1);
 	strcpy(objectPath, "./wwwFiles/");
@@ -91,34 +90,25 @@ int main(int argc, char *argv[]){
 		}
 		fclose(fp); // Close file
 
-		code = "200";
-		msg = "OK";
-		body = fileBuffer;
+		sResp = createResponse("HTTP/1.1", "200", "OK");
+		addHeaderResponse(sResp, "Content-Type: text/html; charset=UTF-8");
+
+		strBuffer[0] = '\0';
+		sprintf(strBuffer, "Content-Length: %d", (int)strlen(fileBuffer));
+		addHeaderResponse(sResp, strBuffer);
+		addHeaderResponse(sResp, "Connection: close");
+
+		addBodyResponse(sResp, fileBuffer);
 	}else{
-		code = "404";
-		msg = "Not found";
-		body = "<html><h1>Page not found</h1></html>\r\n";
+		sResp = pageNotFoundResponse();
+		addBodyResponse(sResp, "<html><h1>Page not found</h1></html>");
 	}
-	free(objectPath);
-
-	
-	struct response* sResp = createResponse("HTTP/1.1", code, msg);
-	addHeaderResponse(sResp, "Content-Type: text/html; charset=UTF-8");
-
-	strBuffer[0] = '\0';
-	sprintf(strBuffer, "Content-Length: %d", (int)strlen(body));
-	addHeaderResponse(sResp, strBuffer);
-	addHeaderResponse(sResp, "Connection: close");
-
-	addBodyResponse(sResp, body);
-
-	respBuf = responseToBuffer(sResp);
+	free(objectPath)
+;
+	char *respBuf = responseToBuffer(sResp);
 	freeResponse(sResp);
 
 	printf("%s\n", respBuf);
-	free(respBuf);
-
-
 	msgLen = strlen(respBuf);
 	n = 0;
 	for(i = 0; i < msgLen; i+=n){
@@ -128,6 +118,7 @@ int main(int argc, char *argv[]){
 			exit(1);
 		}
 	}
+	free(respBuf);
 	close(clientSock);
 	printf("Client disconnected\n");
 
