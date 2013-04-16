@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 
 struct request{
@@ -26,4 +27,6 @@ void addHeaderResponse(struct response* resp, char* header);
 void addBodyResponse(struct response* resp, char* body);
 char* responseToBuffer(struct response* resp);
 void freeResponse(struct response* resp);
+
+struct response* pageNotFoundResponse();
 

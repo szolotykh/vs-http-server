@@ -108,6 +108,10 @@ char* responseToBuffer(struct response* resp){
 	return buf;
 }
 
+struct response* pageNotFoundResponse(){
+	return createResponse("HTTP/1.1", "404", "Not found");
+}
+
 void freeResponse(struct response* resp){
 	free(resp->protocol);
 	free(resp->code);
