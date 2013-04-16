@@ -2,7 +2,14 @@
 #include "HTTPServer.h"
 
 
+
 int main(int argc, char *argv[]){
+	// Check number of arguments
+	if(argc<2){
+		printf("Use: %s port\n", argv[0]);
+		exit(0);
+	}
+
 	printf("===== Http Server =====\n");
 
 	int sock, clientSock;
@@ -24,6 +31,8 @@ int main(int argc, char *argv[]){
         	printf("ERROR opening socket\n");
 		exit(1);
 	}
+	printf("Socket created\n");
+
 	struct sockaddr_in sAddr, clientAddr;
     	memset(&sAddr, '0', sizeof(sAddr));
     	sAddr.sin_family = AF_INET;
