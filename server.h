@@ -12,6 +12,8 @@
 #include <sys/time.h>
 
 #define BUFFER_SIZE 2048
-#define MAX_FILE_SIZE 4096 
+#define MAX_FILE_SIZE 4096
+
+int startHTTPServer(int port);
 
 #endif

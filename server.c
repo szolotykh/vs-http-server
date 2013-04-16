@@ -12,8 +12,8 @@ int main(int argc, char *argv[]){
 
 	printf("===== Http Server =====\n");
 
-	int sock, clientSock;
-	socklen_t clientLen;
+	int serverSocket, clientSock;
+	
 	char buffer[BUFFER_SIZE];
 	char cBuffer;
 	char strBuffer[1024];
@@ -25,31 +25,14 @@ int main(int argc, char *argv[]){
 	int i; // For index
 	char fileBuffer[MAX_FILE_SIZE]; // Buffer to read file
 
-	// Create socket
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-     	if (sock < 0){
-        	printf("ERROR opening socket\n");
-		exit(1);
-	}
-	printf("Socket created\n");
+	serverSocket = startHTTPServer(atoi(argv[1]));
 
-	struct sockaddr_in sAddr, clientAddr;
-    	memset(&sAddr, '0', sizeof(sAddr));
-    	sAddr.sin_family = AF_INET;
-    	sAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    	sAddr.sin_port = htons(atoi(argv[1]));
 
-    	if(bind(sock, (struct sockaddr*)&sAddr, sizeof(sAddr)) < 0){
-		printf("ERROR to bind\n");
-		exit( 1 );
-	}
-	printf("bind\n");
-	listen(sock, 5);
-	printf("listen\n");
-	clientLen = sizeof(clientAddr);
-
+	struct sockaddr_in clientAddr;
+	socklen_t clientLen = sizeof(clientAddr);
+	
 	while(1){
-     	clientSock = accept(sock, 
+     	clientSock = accept(serverSocket, 
                  (struct sockaddr *) &clientAddr, &clientLen);
 	printf("Client accepted\n");
      	if(clientSock < 0){
@@ -149,8 +132,36 @@ int main(int argc, char *argv[]){
 	printf("Client disconnected\n");
 
 	}
- 	close(sock);
+ 	close(serverSocket);
 	printf("Socket closed\n");
 
 	return 0;
+}
+
+int startHTTPServer(int port){
+	// Create socket
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
+     	if (sock < 0){
+        	printf("ERROR opening socket\n");
+		exit(1);
+	}
+	printf("Socket created\n");
+
+	struct sockaddr_in sAddr;
+    	memset(&sAddr, '0', sizeof(sAddr));
+    	sAddr.sin_family = AF_INET;
+    	sAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    	sAddr.sin_port = htons(port);
+	
+	// Bind
+    	if(bind(sock, (struct sockaddr*)&sAddr, sizeof(sAddr)) < 0){
+		printf("ERROR to bind\n");
+		exit( 1 );
+	}
+	printf("bind\n");
+	// Listen
+	listen(sock, 5);
+	printf("listen\n");
+
+	return sock;
 }
