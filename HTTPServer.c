@@ -42,6 +42,20 @@ struct request* requestFromBuffer(char* buf, int len){
 	return req;
 }
 
+char* getRequestHeaderValue(struct request* req, char* name){
+	char* start = strstr(req->headers, name);
+	if(start == NULL)
+		return NULL;
+	char* end = strstr(start, "\r\n");
+	start += (strlen(name)+2);
+
+	int valueLen = end-start;
+	char* valueStr = (char*)malloc(valueLen + 1);
+	memcpy(valueStr, start,valueLen);
+	valueStr[valueLen] = '\0';
+	return valueStr;
+}
+
 void freeRequest(struct request* req){
 	free(req->method);
 	free(req->object);
