@@ -1,5 +1,4 @@
 #include "server.h"
-#include "HTTPServer.h"
 
 
 
@@ -15,7 +14,7 @@ int main(int argc, char *argv[]){
 	int serverSocket;
 	
 	char buffer[BUFFER_SIZE];
-	char cBuffer;
+	
 	char strBuffer[1024];
 	char* stopChars = "\r\n\r\n";
 	int n;// number of send or received bytes	
@@ -43,6 +42,7 @@ int main(int argc, char *argv[]){
 	bzero(buffer,BUFFER_SIZE);
 	int receivedLen = 0;	
 	int stopInd = 0;
+	char cBuffer;
 	while(1){
 		if(receivedLen == BUFFER_SIZE)
 			break; // handle this
@@ -114,21 +114,15 @@ int main(int argc, char *argv[]){
 		sResp = webSocketResponse(SecWebSocketKeyHeader, SecWebSocketProtocolHeader);
 	}
 
-	char *respBuf = responseToBuffer(sResp);
+
+	if(sendResponse(clientSock, sResp) < 0){
+		printf("ERROR writing to socket");
+		exit(1);
+	}
 	freeResponse(sResp);
 
-	printf("%s\n", respBuf);
-	msgLen = strlen(respBuf);
-	n = 0;
-	for(i = 0; i < msgLen; i+=n){
-		n = write(clientSock,respBuf+i, msgLen-i);
-		if(n < 0){
-			printf("ERROR writing to socket");
-			exit(1);
-		}
-	}
-	free(respBuf);
-	close(clientSock);
+
+	close(clientSock); // Close client socket
 	printf("Client disconnected\n");
 
 	}
@@ -165,3 +159,24 @@ int startHTTPServer(int port){
 
 	return sock;
 }
+
+int sendData(int sock, char* data, int dataLen){
+	int n = 0, i;
+	for(i = 0; i < dataLen; i+=n){
+		n = write(sock,data+i, dataLen-i);
+		if(n < 0)
+			return n;
+	}
+	return i;
+}
+
+int sendResponse(int sock, struct response* resp){
+	char *responseStr = responseToBuffer(resp);
+	printf("%s\n", responseStr); // For debug
+	int n = sendData(sock, responseStr, strlen(responseStr));
+	free(responseStr);
+	return n;
+}
+
+
+
