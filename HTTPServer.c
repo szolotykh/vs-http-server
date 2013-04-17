@@ -43,16 +43,24 @@ struct request* requestFromBuffer(char* buf, int len){
 }
 
 char* getRequestHeaderValue(struct request* req, char* name){
-	char* start = strstr(req->headers, name);
-	if(start == NULL)
+	char* searchName = (char*)malloc(strlen(name)+3);
+	strcpy(searchName, name);
+   	strcat(searchName, ": ");
+
+	char* start = strstr(req->headers, searchName);
+	if(start == NULL){
+		free(searchName);
 		return NULL;
+	}
 	char* end = strstr(start, "\r\n");
-	start += (strlen(name)+2);
+	start += strlen(searchName);
+	
 
 	int valueLen = end-start;
 	char* valueStr = (char*)malloc(valueLen + 1);
 	memcpy(valueStr, start,valueLen);
 	valueStr[valueLen] = '\0';
+	free(searchName);
 	return valueStr;
 }
 
@@ -94,6 +102,17 @@ void addHeaderResponse(struct response* resp, char* header){
 	free( resp->headers );
 	resp->headers = str;
 }
+void addHeaderResponsePair(struct response* resp, char* name, char* value){
+	char* str = (char*)malloc(strlen(resp->headers) + strlen(name)+2+strlen(value)+1+2);
+	strcpy(str, resp->headers);
+	strcat(str, name);
+	strcat(str, ": ");
+	strcat(str, value);
+	strcat(str, "\r\n");
+	free( resp->headers );
+	resp->headers = str;
+}
+
 
 void addBodyResponse(struct response* resp, char* body){
 	char* str = (char*)malloc(strlen(resp->body) + strlen(body)+1);
@@ -124,6 +143,37 @@ char* responseToBuffer(struct response* resp){
 
 struct response* pageNotFoundResponse(){
 	return createResponse("HTTP/1.1", "404", "Not found");
+}
+
+char* createWebSocketKey(char* clientKey){
+	char* magicString = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+	int strLen = strlen(clientKey) + strlen(magicString);
+	char* str = (char*)malloc(strLen + 1);
+	strcpy (str, clientKey);
+  	strcat (str, magicString);
+
+	SHA1Context sha;
+	uint8_t sha1Result[20];
+	SHA1Reset(&sha);
+	SHA1Input(&sha,(const unsigned char *) str, strLen);
+	SHA1Result(&sha, sha1Result);
+
+	char* base64Result = (char*)malloc(29);
+	base64encode(sha1Result, 20, base64Result, 28);
+	base64Result[28] = '\0';
+	free(str);
+	return base64Result;
+}
+
+struct response* webSocketResponse(char* clientKey, char* webSocketProtocol){
+	struct response* resp = createResponse("HTTP/1.1", "101", "Switching Protocols");
+	addHeaderResponse(resp, "Upgrade: websocket");
+	addHeaderResponse(resp, "Connection: Upgrade");
+	addHeaderResponsePair(resp,
+		"Sec-WebSocket-Accept",
+		createWebSocketKey(clientKey));
+	addHeaderResponsePair(resp, "Sec-WebSocket-Protocol", webSocketProtocol);
+	return resp;
 }
 
 void freeResponse(struct response* resp){

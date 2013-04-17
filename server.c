@@ -72,6 +72,8 @@ int main(int argc, char *argv[]){
 	
 	struct response* sResp;
 
+	char* UpgradeHeader = getRequestHeaderValue(clientReq, "Upgrade");
+	if(UpgradeHeader == NULL){
 	// Create object path
 	char* objectPath = (char*)malloc(strlen("./wwwFiles/") + strlen(clientReq->object)+1);
 	strcpy(objectPath, "./wwwFiles/");
@@ -103,8 +105,15 @@ int main(int argc, char *argv[]){
 		sResp = pageNotFoundResponse();
 		addBodyResponse(sResp, "<html><h1>Page not found</h1></html>");
 	}
-	free(objectPath)
-;
+	free(objectPath);
+	}else{
+		char* SecWebSocketKeyHeader = getRequestHeaderValue(
+			clientReq, "Sec-WebSocket-Key");
+		char* SecWebSocketProtocolHeader = getRequestHeaderValue(
+			clientReq, "Sec-WebSocket-Protocol");
+		sResp = webSocketResponse(SecWebSocketKeyHeader, SecWebSocketProtocolHeader);
+	}
+
 	char *respBuf = responseToBuffer(sResp);
 	freeResponse(sResp);
 
