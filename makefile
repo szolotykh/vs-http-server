@@ -1,22 +1,32 @@
+# Makefile of vs-http-server
+CC=gcc
+
+IDIR=./include
+CFLAGS=-I$(IDIR)
+
+EXECUTABLE = server
+
+CDIR=./src
+
 all: server
 
 server: server.o HTTPServer.o WebSocket.o sha1.o base64.o
-	gcc server.o HTTPServer.o WebSocket.o sha1.o base64.o -o server
+	$(CC) server.o HTTPServer.o WebSocket.o sha1.o base64.o -o $(EXECUTABLE)
 
-server.o: server.c server.h
-	gcc -c server.c
+server.o: $(CDIR)/server.c
+	$(CC) -c $(CDIR)/server.c $(CFLAGS)
 
-HTTPServer.o: HTTPServer.c HTTPServer.h
-	gcc -c HTTPServer.c
+HTTPServer.o: $(CDIR)/HTTPServer.c
+	$(CC) -c $(CDIR)/HTTPServer.c $(CFLAGS)
 
-WebSocket.o: WebSocket.c WebSocket.h
-	gcc -c WebSocket.c
+WebSocket.o: $(CDIR)/WebSocket.c
+	$(CC) -c $(CDIR)/WebSocket.c $(CFLAGS)
 
-sha1.o: sha1.c sha1.h
-	gcc -c sha1.c
+sha1.o: $(CDIR)/sha1.c
+	$(CC) -c $(CDIR)/sha1.c $(CFLAGS)
 
-base64.o: base64.c base64.h
-	gcc -c base64.c
+base64.o: $(CDIR)/base64.c
+	$(CC) -c $(CDIR)/base64.c $(CFLAGS)
 
 clean:
-	rm -rf *o server
+	rm -rf *o $(EXECUTABLE)
