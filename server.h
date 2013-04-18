@@ -15,6 +15,7 @@
 #define BUFFER_SIZE 2048
 #define MAX_FILE_SIZE 4096
 
+
 /* Start http server
 * Discrioption:
 *	Create server socket, bind and start listen
@@ -43,5 +44,7 @@ int sendData(int sock, char* data, int dataLen);
 *	Number of send bytes or -1
 */
 int sendResponse(int sock, struct response* resp);
+
+struct request* receiveRequest(int sock);
 
 #endif

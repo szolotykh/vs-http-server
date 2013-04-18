@@ -13,10 +13,7 @@ int main(int argc, char *argv[]){
 
 	int serverSocket;
 	
-	char buffer[BUFFER_SIZE];
-	
 	char strBuffer[1024];
-	char* stopChars = "\r\n\r\n";
 	int n;// number of send or received bytes	
 	int msgLen;
 	int processLen;
@@ -31,49 +28,26 @@ int main(int argc, char *argv[]){
 	socklen_t clientLen = sizeof(clientAddr);
 	
 	while(1){
-     	clientSock = accept(serverSocket, 
-                 (struct sockaddr *) &clientAddr, &clientLen);
-	printf("Client accepted\n");
+     	clientSock = accept(serverSocket, (struct sockaddr *) &clientAddr, &clientLen);
      	if(clientSock < 0){
         	printf("ERROR on accept\n");
-		exit(1);
+		continue;
 	}
+	printf("Client accepted\n");
 
-	bzero(buffer,BUFFER_SIZE);
-	int receivedLen = 0;	
-	int stopInd = 0;
-	char cBuffer;
-	while(1){
-		if(receivedLen == BUFFER_SIZE)
-			break; // handle this
-		n = read(clientSock, &cBuffer, 1);
-     		if(n < 0){
-			printf("ERROR reading from socket");
-			exit( 1 );
-		}
-		buffer[receivedLen] = cBuffer;
-		receivedLen++;
-		if(stopChars[stopInd] == cBuffer){
-			stopInd++;
-			if(stopInd == 4)
-				break;
-		}
-		else{
-			stopInd = 0;
-		}
-	}
+	// Receive client request
+	struct request* clientReq = receiveRequest(clientSock);
 
-	// Create request header object from string
-	struct request* clientReq = requestFromBuffer(buffer, receivedLen);
 	printf("Method: %s\n", clientReq->method);
 	printf("Object: %s\n", clientReq->object);
 	printf("Protocol: %s\n", clientReq->protocol);
-	printf("Headers: %s\n", clientReq->headers);
-	
+	printf("Headers:\n%s\n", clientReq->headers);
+
 	struct response* sResp;
 
 	char* UpgradeHeader = getRequestHeaderValue(clientReq, "Upgrade");
 	if(UpgradeHeader == NULL){
+
 	// Create object path
 	char* objectPath = (char*)malloc(strlen("./wwwFiles/") + strlen(clientReq->object)+1);
 	strcpy(objectPath, "./wwwFiles/");
@@ -122,7 +96,7 @@ int main(int argc, char *argv[]){
 	freeResponse(sResp);
 
 
-	close(clientSock); // Close client socket
+	close(clientSock); // Close client socketstruct request* receiveRequest(int sock);
 	printf("Client disconnected\n");
 
 	}
@@ -176,6 +150,41 @@ int sendResponse(int sock, struct response* resp){
 	int n = sendData(sock, responseStr, strlen(responseStr));
 	free(responseStr);
 	return n;
+}
+
+struct request* receiveRequest(int sock){
+	char buffer[BUFFER_SIZE];
+	int receivedLen = 0;
+	int stopInd = 0;
+	char cBuffer;
+	int n;
+	char* stopChars = "\r\n\r\n";
+	
+	while(1){
+		if(receivedLen == BUFFER_SIZE){
+			// Add error checking
+			return NULL;
+		}
+		n = read(sock, &cBuffer, 1);
+	     	if(n < 0){
+			// Add error checking
+			//printf("ERROR reading from socket");
+			return NULL;
+		}
+		buffer[receivedLen] = cBuffer;
+		receivedLen++;
+		if(stopChars[stopInd] == cBuffer){
+			stopInd++;
+			if(stopInd == 4)
+				break;
+		}
+		else{
+			stopInd = 0;
+		}
+	}
+
+	// Create request header object from string
+	return requestFromBuffer(buffer, receivedLen);
 }
 
 
