@@ -11,84 +11,83 @@ int main(int argc, char *argv[]){
 
 	printf("===== Http Server =====\n");
 
-	int serverSocket;
-	
-	char strBuffer[1024];
-	int n;// number of send or received bytes	
-	int msgLen;
-	int processLen;
-	int i; // For index
+	// Start HTTP Server
+	int serverSocket = startHTTPServer(atoi(argv[1]));
+	if(serverSocket < 0){
+		exit(0);
+	}
 
-	serverSocket = startHTTPServer(atoi(argv[1]));
-
-	int clientSock;
-	struct sockaddr_in clientAddr;
-	socklen_t clientLen = sizeof(clientAddr);
 	
 	while(1){
-     	clientSock = accept(serverSocket, (struct sockaddr *) &clientAddr, &clientLen);
-     	if(clientSock < 0){
-        	printf("ERROR on accept\n");
-		continue;
-	}
-	printf("Client accepted\n");
+		struct sockaddr_in clientAddr;
+		socklen_t clientLen = sizeof(clientAddr);
+	     	int clientSock = accept(
+			serverSocket, (struct sockaddr *) &clientAddr, &clientLen);
+	     	if(clientSock < 0){
+			printf("ERROR on msgLenaccept\n");
+			continue;
+		}
+		printf("Client accepted\n");
 
-	// Receive client request
-	struct request* clientReq = receiveRequest(clientSock);
+		// Receive client request
+		struct request* clientReq = receiveRequest(clientSock);
+		// Print client request
+		printf("Method: %s\n", clientReq->method);
+		printf("Object: %s\n", clientReq->object);
+		printf("Protocol: %s\n", clientReq->protocol);
+		printf("Headers:\n%s\n", clientReq->headers);
 
-	printf("Method: %s\n", clientReq->method);
-	printf("Object: %s\n", clientReq->object);
-	printf("Protocol: %s\n", clientReq->protocol);
-	printf("Headers:\n%s\n", clientReq->headers);
+		struct response* sResp;
 
-	struct response* sResp;
+		char* UpgradeHeader = getRequestHeaderValue(clientReq, "Upgrade");
+		if(UpgradeHeader == NULL){
 
-	char* UpgradeHeader = getRequestHeaderValue(clientReq, "Upgrade");
-	if(UpgradeHeader == NULL){
+		// Create object path
+		char* objectPath = strmerge("./wwwFiles/", clientReq->object);
+		// Open requested object file
+		char *fileBuffer = fileToString(objectPath);
+		// Free object path
+		free(objectPath);
 
-	// Create object path
-	char* objectPath = strmerge("./wwwFiles/", clientReq->object);
-	// Open requested object file
-	char *fileBuffer = fileToString(objectPath);
-	// Free object path
-	free(objectPath);
-	// Check if the file exists
-	if(fileBuffer != NULL){
+		// Check if the file
+		if(fileBuffer != NULL){
 
-		sResp = createResponse("HTTP/1.1", "200", "OK");
-		addHeaderResponse(sResp, "Content-Type: text/html; charset=UTF-8");
+			sResp = createResponse("HTTP/1.1", "200", "OK");
+			addHeaderResponse(sResp, "Content-Type: text/html; charset=UTF-8");
 
-		strBuffer[0] = '\0';
-		sprintf(strBuffer, "Content-Length: %d", (int)strlen(fileBuffer));
-		addHeaderResponse(sResp, strBuffer);
-		addHeaderResponse(sResp, "Connection: close");
+			char* strLength = intToStr((int)strlen(fileBuffer));
+			addHeaderResponsePair(sResp, "Content-Length", strLength);
+			addHeaderResponse(sResp, "Connection: close");
 
-		addBodyResponse(sResp, fileBuffer);
+			addBodyResponse(sResp, fileBuffer);
 
-		free(fileBuffer);
-	}else{
-		sResp = pageNotFoundResponse();
-		addBodyResponse(sResp, "<html><h1>Page not found</h1></html>");
-	}
+			free(fileBuffer);
+			free(strLength);
+		}else{
+			sResp = pageNotFoundResponse();
+			addBodyResponse(sResp, "<html><h1>Page not found</h1></html>");
+		}
 	
-	}else{
-		char* SecWebSocketKeyHeader = getRequestHeaderValue(
-			clientReq, "Sec-WebSocket-Key");
-		char* SecWebSocketProtocolHeader = getRequestHeaderValue(
-			clientReq, "Sec-WebSocket-Protocol");
-		sResp = webSocketResponse(SecWebSocketKeyHeader, SecWebSocketProtocolHeader);
-	}
+		}else{
+			char* SecWebSocketKeyHeader = getRequestHeaderValue(
+				clientReq, "Sec-WebSocket-Key");
+			char* SecWebSocketProtocolHeader = getRequestHeaderValue(
+				clientReq, "Sec-WebSocket-Protocol");
+			sResp = webSocketResponse(
+				SecWebSocketKeyHeader,
+				SecWebSocketProtocolHeader);
+		}
 
 
-	if(sendResponse(clientSock, sResp) < 0){
-		printf("ERROR writing to socket");
-		exit(1);
-	}
-	freeResponse(sResp);
+		if(sendResponse(clientSock, sResp) < 0){
+			printf("ERROR writing to socket");
+			exit(1);
+		}
+		freeResponse(sResp);
 
 
-	close(clientSock); // Close client socketstruct request* receiveRequest(int sock);
-	printf("Client disconnected\n");
+		close(clientSock); // Close client socket
+		printf("Client disconnected\n");
 
 	}
  	close(serverSocket);
@@ -102,7 +101,7 @@ int startHTTPServer(int port){
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
      	if (sock < 0){
         	printf("ERROR opening socket\n");
-		exit(1);
+		return sock;
 	}
 	printf("Socket created\n");
 
@@ -115,7 +114,7 @@ int startHTTPServer(int port){
 	// Bind
     	if(bind(sock, (struct sockaddr*)&sAddr, sizeof(sAddr)) < 0){
 		printf("ERROR to bind\n");
-		exit( 1 );
+		return -1;
 	}
 	printf("bind\n");
 	// Listen
