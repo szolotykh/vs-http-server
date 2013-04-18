@@ -17,9 +17,7 @@ int main(int argc, char *argv[]){
 	int n;// number of send or received bytes	
 	int msgLen;
 	int processLen;
-	FILE *fp; // Pointer on file
 	int i; // For index
-	char fileBuffer[MAX_FILE_SIZE]; // Buffer to read file
 
 	serverSocket = startHTTPServer(atoi(argv[1]));
 
@@ -53,18 +51,10 @@ int main(int argc, char *argv[]){
 	strcpy(objectPath, "./wwwFiles/");
 	strcat(objectPath, clientReq->object);
 
-	// Open requested object
-	fp = fopen(objectPath,"r");
-	if(fp != NULL){
-		for(i = 0; i<MAX_FILE_SIZE; i++){
-			int c = getc(fp);
-			if(c == EOF){
-				fileBuffer[i]='\0';
-				break;
-			}
-			fileBuffer[i] = (char)c;
-		}
-		fclose(fp); // Close file
+	// Open requested object file
+	char *fileBuffer = fileToString(objectPath);
+
+	if(fileBuffer != NULL){
 
 		sResp = createResponse("HTTP/1.1", "200", "OK");
 		addHeaderResponse(sResp, "Content-Type: text/html; charset=UTF-8");
@@ -75,6 +65,8 @@ int main(int argc, char *argv[]){
 		addHeaderResponse(sResp, "Connection: close");
 
 		addBodyResponse(sResp, fileBuffer);
+
+		free(fileBuffer);
 	}else{
 		sResp = pageNotFoundResponse();
 		addBodyResponse(sResp, "<html><h1>Page not found</h1></html>");
@@ -145,7 +137,7 @@ int sendData(int sock, char* data, int dataLen){
 }
 
 int sendResponse(int sock, struct response* resp){
-	char *responseStr = responseToBuffer(resp);
+	char *responseStr = responseToString(resp);
 	printf("%s\n", responseStr); // For debug
 	int n = sendData(sock, responseStr, strlen(responseStr));
 	free(responseStr);
@@ -187,5 +179,25 @@ struct request* receiveRequest(int sock){
 	return requestFromBuffer(buffer, receivedLen);
 }
 
+char* fileToString(char* path){
+	FILE *fp = fopen(path,"r"); // Open file
+	if(fp == NULL)
+		return NULL;
+	// Obtain file size
+	fseek(fp, 0L, SEEK_END);
+	int fileSize = ftell(fp);
+	fseek(fp, 0L, SEEK_SET);
+	// Allocate memory
+	char *str = (char*)malloc(fileSize+1);
+	
+	//Reading file
+	int i;
+	for(i = 0; i<fileSize; i++){
+		str[i] = (char)getc(fp);
+	}
+	str[fileSize]='\0';
+	fclose(fp); // Close file
+	return str;
+}
 
 

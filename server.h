@@ -47,4 +47,6 @@ int sendResponse(int sock, struct response* resp);
 
 struct request* receiveRequest(int sock);
 
+char* fileToString(char* path);
+
 #endif

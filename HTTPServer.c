@@ -122,10 +122,10 @@ void addBodyResponse(struct response* resp, char* body){
 	resp->body = str;
 }
 
-char* responseToBuffer(struct response* resp){
+char* responseToString(struct response* resp){
 	int size = strlen(resp->protocol)+1+strlen(resp->code)+1+strlen(resp->msg)+2+
 		strlen(resp->headers)+2+strlen(resp->body);
-	char* buf = (char*)malloc( size );
+	char* buf = (char*)malloc(size + 1);
 	strcpy(buf, resp->protocol);
 	strcat(buf, " ");
 	strcat(buf, resp->code);

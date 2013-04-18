@@ -41,7 +41,7 @@ struct response* createResponse(char* protocol, char *code, char *msg);
 void addHeaderResponse(struct response* resp, char* header);
 void addHeaderResponsePair(struct response* resp, char* name, char* value);
 void addBodyResponse(struct response* resp, char* body);
-char* responseToBuffer(struct response* resp);
+char* responseToString(struct response* resp);
 void freeResponse(struct response* resp);
 
 /* Create page not found server response
