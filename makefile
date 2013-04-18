@@ -1,13 +1,16 @@
 all: server
 
-server: server.o HTTPServer.o sha1.o base64.o
-	gcc server.o HTTPServer.o sha1.o base64.o -o server
+server: server.o HTTPServer.o WebSocket.o sha1.o base64.o
+	gcc server.o HTTPServer.o WebSocket.o sha1.o base64.o -o server
 
 server.o: server.c server.h
 	gcc -c server.c
 
 HTTPServer.o: HTTPServer.c HTTPServer.h
 	gcc -c HTTPServer.c
+
+WebSocket.o: WebSocket.c WebSocket.h
+	gcc -c WebSocket.c
 
 sha1.o: sha1.c sha1.h
 	gcc -c sha1.c
