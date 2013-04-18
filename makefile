@@ -10,8 +10,8 @@ CDIR=./src
 
 all: server
 
-server: server.o HTTPServer.o WebSocket.o sha1.o base64.o
-	$(CC) server.o HTTPServer.o WebSocket.o sha1.o base64.o -o $(EXECUTABLE)
+server: server.o HTTPServer.o WebSocket.o sha1.o base64.o vsstring.o
+	$(CC) server.o HTTPServer.o WebSocket.o sha1.o base64.o vsstring.o -o $(EXECUTABLE)
 
 server.o: $(CDIR)/server.c
 	$(CC) -c $(CDIR)/server.c $(CFLAGS)
@@ -27,6 +27,9 @@ sha1.o: $(CDIR)/sha1.c
 
 base64.o: $(CDIR)/base64.c
 	$(CC) -c $(CDIR)/base64.c $(CFLAGS)
+
+vsstring.o: $(CDIR)/vsstring.c
+	$(CC) -c $(CDIR)/vsstring.c $(CFLAGS)
 
 clean:
 	rm -rf *o $(EXECUTABLE)

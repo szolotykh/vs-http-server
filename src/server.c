@@ -47,13 +47,12 @@ int main(int argc, char *argv[]){
 	if(UpgradeHeader == NULL){
 
 	// Create object path
-	char* objectPath = (char*)malloc(strlen("./wwwFiles/") + strlen(clientReq->object)+1);
-	strcpy(objectPath, "./wwwFiles/");
-	strcat(objectPath, clientReq->object);
-
+	char* objectPath = strmerge("./wwwFiles/", clientReq->object);
 	// Open requested object file
 	char *fileBuffer = fileToString(objectPath);
-
+	// Free object path
+	free(objectPath);
+	// Check if the file exists
 	if(fileBuffer != NULL){
 
 		sResp = createResponse("HTTP/1.1", "200", "OK");
@@ -71,7 +70,7 @@ int main(int argc, char *argv[]){
 		sResp = pageNotFoundResponse();
 		addBodyResponse(sResp, "<html><h1>Page not found</h1></html>");
 	}
-	free(objectPath);
+	
 	}else{
 		char* SecWebSocketKeyHeader = getRequestHeaderValue(
 			clientReq, "Sec-WebSocket-Key");

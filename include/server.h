@@ -10,6 +10,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sys/time.h>
+
+#include "vsstring.h"
 #include "HTTPServer.h"
 
 #define BUFFER_SIZE 2048
