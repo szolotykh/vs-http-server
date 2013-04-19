@@ -19,6 +19,8 @@ int main(int argc, char *argv[]){
 
 	
 	while(1){
+		unsigned char usingProtocol = HTTP;
+
 		struct sockaddr_in clientAddr;
 		socklen_t clientLen = sizeof(clientAddr);
 	     	int clientSock = accept(
@@ -76,6 +78,8 @@ int main(int argc, char *argv[]){
 			sResp = webSocketResponse(
 				SecWebSocketKeyHeader,
 				SecWebSocketProtocolHeader);
+
+			usingProtocol = WEB_SOCKET;
 		}
 
 
@@ -85,6 +89,17 @@ int main(int argc, char *argv[]){
 		}
 		freeResponse(sResp);
 
+		if(usingProtocol == WEB_SOCKET){
+			// Start WebSocket communication
+			printf("Start WebSocket communication\n");
+			struct wsFrame* wsMsg = receiveWSMessage(clientSock);
+			printf("Length: %d\n", wsMsg->len);
+			if(wsMsg->mask == 1)
+				printf("Masking-key: %s\n", wsMsg->maskingKey);
+			if(wsMsg->len > 0)
+				printf("Data: %s\n", wsMsg->data);
+			free(wsMsg);
+		}
 
 		close(clientSock); // Close client socket
 		printf("Client disconnected\n");
@@ -197,5 +212,80 @@ char* fileToString(char* path){
 	fclose(fp); // Close file
 	return str;
 }
+struct wsFrame* receiveWSMessage(int sock){
+	struct wsFrame* msg = (struct wsFrame*)malloc(sizeof(struct wsFrame));
+	int n, i;
+	unsigned char rByte;
+
+	// Read first byte
+	n = read(sock, &rByte, 1);
+	if(n < 0)
+		return NULL;
+	msg->fin = rByte>>7;
+	unsigned char rsv = rByte & 0x70;
+	if(rsv != 0)
+		return NULL;
+	msg->opcode = rByte&0x0F;
+
+	// Read second byte
+	n = read(sock, &rByte, 1);
+	if(n < 0)
+		return NULL;
+
+	msg->mask = rByte & 0x80;
+	msg->mask = msg->mask >> 7;
+
+	rByte = rByte & 0x7F;
+
+	printf("rByte: %d\n", rByte);
+	if(rByte < 126){
+		msg->len = (int)rByte;
+	}else{
+		int lenSize;
+		if(rByte == 126)
+			lenSize = 2;
+		else
+			lenSize = 4;
+
+		char *d = (char*)&msg->len;
+		for(i = 0; i < lenSize; i+=n){
+			n = read(sock, d+i, lenSize-i);
+			if(n < 0)
+				return NULL;
+		}
+		msg->len = ntohl(msg->len);
+		if(rByte == 126)
+			msg->len = msg->len>>16;
+	}
+	if(msg->mask == 1){
+		msg->maskingKey = (char*)malloc(5);
+		for(i = 0; i < 4; i+=n){
+			n = read(sock, msg->maskingKey+i, 4-i);
+			if(n < 0)
+				return NULL;
+		}
+		msg->maskingKey[4] = '\0';
+	}
+	if(msg->len > 0){
+		msg->data = (char*)malloc(msg->len);
+		for(i = 0; i < msg->len; i+=n){
+			n = read(sock, msg->data+i, msg->len-i);
+			if(n < 0)
+				return NULL;
+		}
+		msg->data[msg->len] = '\0';
+		if(msg->mask == 1){
+			for(i = 0; i < msg->len; i++){
+				msg->data[i] = msg->data[i] ^ msg->maskingKey[i%4];
+			}
+		}
+	}
+	return msg;
+}
+
+
+
+
+
 
 

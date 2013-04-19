@@ -13,9 +13,12 @@
 
 #include "vsstring.h"
 #include "HTTPServer.h"
+#include "WebSocket.h"
 
 #define BUFFER_SIZE 2048
-#define MAX_FILE_SIZE 4096
+
+#define HTTP 1
+#define WEB_SOCKET 2
 
 
 /* Start http server
@@ -50,5 +53,8 @@ int sendResponse(int sock, struct response* resp);
 struct request* receiveRequest(int sock);
 
 char* fileToString(char* path);
+
+struct wsFrame* receiveWSMessage(int sock);
+
 
 #endif
