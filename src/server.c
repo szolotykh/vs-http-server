@@ -11,6 +11,8 @@ int main(int argc, char *argv[]){
 
 	printf("===== Http Server =====\n");
 
+	srand (time(NULL));
+
 	// Start HTTP Server
 	int serverSocket = startHTTPServer(atoi(argv[1]));
 	if(serverSocket < 0){
