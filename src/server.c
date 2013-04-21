@@ -101,6 +101,15 @@ int main(int argc, char *argv[]){
 			if(wsMsg->len > 0)
 				printf("Data: %s\n", wsMsg->data);
 			free(wsMsg);
+
+			struct wsFrame* wsRespMsg = createTextWSFrame("I am server!");
+			char* wsRespMsgStr = wsFrameToString(wsRespMsg);
+			printf("Web socket response frame:\n%s\n", wsRespMsgStr);
+
+			sendData(clientSock, wsRespMsgStr, strlen(wsRespMsgStr));
+
+			freeWSFrame(wsRespMsg);
+			free(wsRespMsgStr);
 		}
 
 		close(clientSock); // Close client socket

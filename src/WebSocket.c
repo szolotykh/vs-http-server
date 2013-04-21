@@ -18,6 +18,7 @@ struct wsFrame* createTextWSFrame(char *str){
 	frame->maskingKey = generateMaskingKey();
 	frame->data = (char*)malloc(frame->len+1);
 	strcpy(frame->data, str);
+	return frame;
 }
 
 char* wsFrameToString(struct wsFrame* frame){
