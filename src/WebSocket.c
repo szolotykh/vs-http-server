@@ -9,20 +9,24 @@ char* generateMaskingKey(){
 	return maskingKey;
 }
 
-struct wsFrame* createTextWSFrame(char *str){
+struct wsFrame* createWSFrame(char *data, int len, unsigned char opcode){
 	struct wsFrame* frame = (struct wsFrame*)malloc(sizeof(struct wsFrame));
 	frame->fin = 1;
-	frame->opcode = 0x01;
+	frame->opcode = opcode;
 	frame->mask = 1;
-	frame->len = strlen(str);
+	frame->len = len;
 	frame->maskingKey = generateMaskingKey();
 	frame->data = (char*)malloc(frame->len+1);
-	strcpy(frame->data, str);
+	strcpy(frame->data, data);
 	return frame;
 }
 
+struct wsFrame* createTextWSFrame(char *str){
+	return createWSFrame(str, strlen(str), WS_OPCODE_TEXT);
+}
+
 char* wsFrameToString(struct wsFrame* frame){
-	
+
 	unsigned char byte1 = 0;
 	byte1 = frame->fin<<7;
 	byte1 = byte1 & 0x8F;
