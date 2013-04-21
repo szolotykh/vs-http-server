@@ -12,9 +12,27 @@ int main(int argc, char *argv[]){
 	printf("===== Http Server =====\n");
 
 	srand (time(NULL));
+	pthread_t pthHTTPServer;
+	int port = atoi(argv[1]);
+	pthread_create(&pthHTTPServer, NULL, threadHTTPServer, &port);
 
+	char serverCommand[100];
+	while(1){
+		scanf("%s", serverCommand);
+		if(strcmp(serverCommand, "exit") == 0){
+			pthread_cancel(pthHTTPServer);
+			return 1;
+		}
+		printf("-Command is not defined\n");
+	}
+
+	return 0;
+}
+
+void *threadHTTPServer(void *arg)
+{
 	// Start HTTP Server
-	int serverSocket = startHTTPServer(atoi(argv[1]));
+	int serverSocket = startHTTPServer(*((int*)arg));
 	if(serverSocket < 0){
 		exit(0);
 	}
@@ -119,7 +137,7 @@ int main(int argc, char *argv[]){
  	close(serverSocket);
 	printf("Socket closed\n");
 
-	return 0;
+	return NULL;
 }
 
 int startHTTPServer(int port){

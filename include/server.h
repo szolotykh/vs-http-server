@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sys/time.h>
+#include <pthread.h>
 
 #include "vsstring.h"
 #include "HTTPServer.h"
@@ -56,6 +57,9 @@ struct request* receiveRequest(int sock);
 char* fileToString(char* path);
 
 struct wsFrame* receiveWSMessage(int sock);
+
+
+void *threadHTTPServer(void *arg);
 
 
 #endif

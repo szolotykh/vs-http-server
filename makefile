@@ -11,7 +11,7 @@ CDIR=./src
 all: server
 
 server: server.o HTTPServer.o WebSocket.o sha1.o base64.o vsstring.o
-	$(CC) server.o HTTPServer.o WebSocket.o sha1.o base64.o vsstring.o -o $(EXECUTABLE)
+	$(CC) server.o HTTPServer.o WebSocket.o sha1.o base64.o vsstring.o -o $(EXECUTABLE) -lpthread
 
 server.o: $(CDIR)/server.c
 	$(CC) -c $(CDIR)/server.c $(CFLAGS)
